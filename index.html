@@ -1,0 +1,1466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Sorting Factory — Always, Sometimes, Never</title>
+
+<!-- Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-6VJ1ECXVH7"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-6VJ1ECXVH7');
+</script>
+
+<!-- Vercel Analytics (only active when deployed to Vercel) -->
+<script defer src="/_vercel/insights/script.js"></script>
+<style>
+/* ── Reset ─────────────────────────────────────────── */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#080818;
+  display:flex;align-items:center;justify-content:center;
+  width:100vw;height:100vh;overflow:hidden}
+
+/* ── App shell ─────────────────────────────────────── */
+#app{position:relative;width:980px;height:650px;
+  border-radius:16px;border:2px solid #2a2a55;overflow:hidden;
+  transform-origin:center center;}
+
+/* ── Generic screen ────────────────────────────────── */
+.scr{position:absolute;inset:0;display:none;flex-direction:column;
+  align-items:center;background:#0e0e24}
+.scr.on{display:flex}
+
+/* shared typography */
+h1{font-size:36px;color:#f0d060;line-height:1.1}
+h2{font-size:21px;color:#fff}
+p{font-size:14px;color:#888;line-height:1.5}
+
+/* ── Buttons ───────────────────────────────────────── */
+.btn{padding:12px 26px;font-size:15px;font-weight:700;border:none;
+  border-radius:9px;cursor:pointer;font-family:inherit;
+  transition:transform .1s,filter .1s}
+.btn:hover:not(:disabled){filter:brightness(1.1);transform:translateY(-2px)}
+.btn:active:not(:disabled){transform:translateY(1px)}
+.btn:disabled{opacity:.38;cursor:default}
+.btn-gold  {background:#f0d060;color:#0d0d20;box-shadow:0 4px 0 #a8903a}
+.btn-green {background:#27ae60;color:#fff;   box-shadow:0 4px 0 #1a7a42}
+.btn-gray  {background:#1e1e3e;color:#888;   box-shadow:0 3px 0 #0a0a1a;border:1px solid #3a3a60}
+.btn-purple{background:#8e44ad;color:#fff;   box-shadow:0 4px 0 #5e2d73}
+
+/* ══════════════════════════════════════════════════════
+   LANDING
+══════════════════════════════════════════════════════ */
+#s-land{justify-content:center;gap:14px;text-align:center;padding:40px}
+#s-land .sub{font-size:15px;color:#555;letter-spacing:3px;text-transform:uppercase;margin-top:-6px}
+
+/* ══════════════════════════════════════════════════════
+   SETUP
+══════════════════════════════════════════════════════ */
+#s-setup{padding:0}
+.s-hdr{background:#12122a;border-bottom:2px solid #2a2a55;padding:14px 24px;
+  width:100%;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.s-ftr{background:#12122a;border-top:2px solid #2a2a55;padding:12px 24px;
+  width:100%;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+#setup-body{flex:1;overflow-y:auto;padding:16px 24px;width:100%}
+#setup-body::-webkit-scrollbar{width:5px}
+#setup-body::-webkit-scrollbar-thumb{background:#2a2a55;border-radius:3px}
+
+.sec-lbl{font-size:11px;text-transform:uppercase;letter-spacing:1px;
+  color:#f0d060;margin-bottom:8px;margin-top:2px}
+.cfg-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.cfg-box{background:#12122a;border:1px solid #2a2a55;border-radius:8px;padding:10px}
+.cfg-box label{display:block;font-size:11px;color:#666;margin-bottom:5px}
+.inp{background:#181830;border:1.5px solid #3a3a65;border-radius:7px;
+  color:#fff;padding:7px 10px;font-size:13px;font-family:inherit;width:100%}
+.inp:focus{outline:none;border-color:#f0d060}
+select.inp{cursor:pointer}
+
+.grp-row{display:grid;grid-template-columns:28px 1fr 1fr 28px;
+  gap:8px;align-items:center;padding:8px 10px;
+  background:#12122a;border:1px solid #2a2a55;border-radius:8px;margin-bottom:5px}
+.grp-num{color:#f0d060;font-weight:700;font-size:14px;text-align:center}
+.rm-btn{background:none;border:1px solid #2a2a55;color:#444;
+  width:26px;height:26px;border-radius:5px;cursor:pointer;font-size:13px}
+.rm-btn:hover{border-color:#e74c3c;color:#e74c3c}
+
+/* ══════════════════════════════════════════════════════
+   GROUP INTRO
+══════════════════════════════════════════════════════ */
+#s-intro{justify-content:center;gap:12px;text-align:center;padding:40px}
+.g-badge{background:#f0d060;color:#0d0d20;font-size:28px;font-weight:900;
+  padding:8px 28px;border-radius:10px;letter-spacing:1px;display:inline-block}
+#intro-em{font-size:58px;margin:6px 0}
+#s-intro p{max-width:460px}
+.note{font-size:12px;color:#2a2a55;margin-top:4px}
+
+/* ══════════════════════════════════════════════════════
+   PROFILE READING
+══════════════════════════════════════════════════════ */
+#s-read{padding:0;justify-content:space-between}
+#read-hdr{background:#12122a;border-bottom:2px solid #2a2a55;padding:12px 24px;
+  width:100%;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+#read-body{flex:1;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;padding:16px 50px;text-align:center;overflow:hidden}
+#read-ftr{background:#12122a;border-top:2px solid #2a2a55;padding:10px 24px;
+  width:100%;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+#read-em{font-size:50px;margin-bottom:2px}
+#read-nm{font-size:26px;font-weight:900;color:#f0d060;margin-bottom:12px}
+#read-txt{font-size:19px;line-height:1.75;color:#ddd;max-width:760px}
+#read-timer{font-size:50px;font-weight:900;color:#f0d060;font-variant-numeric:tabular-nums}
+#read-tl{font-size:10px;color:#444;text-transform:uppercase;text-align:center}
+
+/* ══════════════════════════════════════════════════════
+   GAME
+══════════════════════════════════════════════════════ */
+#s-game{padding:0;position:absolute;inset:0;display:none;flex-direction:column}
+#s-game.on{display:flex}
+
+#hud{display:flex;justify-content:space-between;align-items:center;
+  padding:9px 22px;background:#12122a;border-bottom:2px solid #2a2a55;flex-shrink:0}
+.hb{text-align:center}
+.hl{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#383860}
+.hv{font-size:20px;font-weight:900;color:#f0d060;line-height:1.05}
+
+#gameCanvas{display:block;width:100%;flex:1 1 0;min-height:0}
+
+#sort-wrap{display:flex;gap:8px;padding:9px 12px;
+  background:#12122a;border-top:2px solid #2a2a55;flex-shrink:0}
+.sb{flex:1;padding:13px 4px;font-size:14px;font-weight:800;
+  text-transform:uppercase;letter-spacing:1.5px;border:none;border-radius:9px;
+  cursor:pointer;font-family:inherit;transition:transform .1s,filter .1s}
+.sb:disabled{opacity:.35;cursor:default}
+.sb:not(:disabled):hover{filter:brightness(1.12);transform:translateY(-2px)}
+.sb:not(:disabled):active{transform:translateY(1px)}
+#btn-a{background:#27ae60;color:#fff;box-shadow:0 4px 0 #1a7a42}
+#btn-s{background:#e67e22;color:#fff;box-shadow:0 4px 0 #a85a14}
+#btn-n{background:#e74c3c;color:#fff;box-shadow:0 4px 0 #a83228}
+#btn-ll{background:#8e44ad;color:#fff;box-shadow:0 4px 0 #5e2d73;
+  flex:0 0 auto;width:96px;font-size:12px;letter-spacing:.5px}
+.kb{display:inline-block;background:rgba(255,255,255,.2);
+  border-radius:3px;padding:0 4px;font-size:10px;margin-left:3px}
+
+/* ── Lifeline overlay ──────────────────────────────── */
+#ll-ov{position:absolute;inset:0;background:rgba(4,4,16,.94);
+  display:none;flex-direction:column;align-items:center;
+  justify-content:center;z-index:50;padding:28px 60px;text-align:center}
+#ll-ov.on{display:flex}
+#ll-nm{font-size:18px;font-weight:900;color:#f0d060;margin-bottom:8px}
+#ll-txt{font-size:18px;line-height:1.75;color:#ddd;max-width:720px}
+#ll-cd{font-size:54px;font-weight:900;color:#8e44ad;margin-top:14px}
+#ll-cdl{font-size:11px;color:#444;text-transform:uppercase}
+
+/* ══════════════════════════════════════════════════════
+   RESULT
+══════════════════════════════════════════════════════ */
+#s-result{justify-content:center;gap:11px;text-align:center;padding:30px 40px}
+.s-card{background:#12122a;border:2px solid #f0d060;border-radius:12px;padding:16px 48px}
+.s-card .big{font-size:60px;font-weight:900;color:#f0d060;line-height:1}
+.s-card .lbl{font-size:12px;color:#444;text-transform:uppercase;letter-spacing:1px}
+#rv-list{display:none;max-height:190px;overflow-y:auto;width:82%;
+  border-radius:8px;margin-top:4px}
+#rv-list::-webkit-scrollbar{width:4px}
+#rv-list::-webkit-scrollbar-thumb{background:#2a2a55;border-radius:2px}
+.rv{display:flex;align-items:center;gap:8px;padding:7px 12px;
+  border-radius:6px;margin:3px 0;font-size:13px;text-align:left}
+.rv.ok {background:rgba(39,174,96,.14);border-left:4px solid #27ae60}
+.rv.bad{background:rgba(231,76,60,.14);border-left:4px solid #e74c3c}
+.rv .stmt{flex:1;color:#ccc}
+.rv .ans{font-weight:700;white-space:nowrap;font-size:12px}
+.rv.ok  .ans{color:#2ecc71}.rv.bad .ans{color:#e74c3c}
+
+/* ══════════════════════════════════════════════════════
+   SCOREBOARD
+══════════════════════════════════════════════════════ */
+#s-board{padding:28px 36px;justify-content:center;gap:10px;text-align:center}
+#sb-tbl{width:100%;border-collapse:collapse}
+#sb-tbl th{padding:8px;color:#383860;font-size:10px;text-transform:uppercase;
+  letter-spacing:1px;border-bottom:1px solid #2a2a55}
+#sb-tbl td{padding:10px 8px;font-size:16px;color:#aaa;border-bottom:1px solid #181830}
+.rk1 td{color:#f0d060;font-weight:900;font-size:19px}
+.rk2 td{color:#c0c0c0;font-weight:700}
+.rk3 td{color:#cd7f32;font-weight:700}
+
+/* ── Confetti canvas ───────────────────────────────── */
+#cc{position:fixed;inset:0;pointer-events:none;z-index:99;
+  width:100vw;height:100vh}
+</style>
+</head>
+<body>
+
+<canvas id="cc"></canvas>
+
+<div id="app">
+
+<!-- ══════════ LANDING ══════════ -->
+<div id="s-land" class="scr on">
+  <div style="font-size:62px">⚙️</div>
+  <h1>The Sorting Factory</h1>
+  <p class="sub">Always · Sometimes · Never</p>
+  <p style="max-width:440px;text-align:center;margin-top:4px">
+    A Year 3 group activity. Each group reads a character profile,<br>
+    then sorts statements about that character's daily routine.
+  </p>
+  <div style="display:flex;gap:12px;margin-top:18px">
+    <button class="btn btn-gold" onclick="showSetup()">⚙ Set Up Game</button>
+  </div>
+</div>
+
+<!-- ══════════ SETUP ══════════ -->
+<div id="s-setup" class="scr">
+  <div class="s-hdr">
+    <h2 style="font-size:18px">⚙️ Game Setup</h2>
+    <button class="btn btn-gray" style="padding:7px 14px;font-size:12px"
+      onclick="showScreen('s-land')">← Back</button>
+  </div>
+
+  <div id="setup-body">
+    <div class="sec-lbl">Game Settings</div>
+    <div class="cfg-grid">
+      <div class="cfg-box">
+        <label>Reading Time (seconds)</label>
+        <input class="inp" id="cfg-rt" type="number" min="20" max="180" value="60">
+      </div>
+      <div class="cfg-box">
+        <label>Answering Time per Question (seconds)</label>
+        <input class="inp" id="cfg-at" type="number" min="3" max="20" value="8">
+      </div>
+      <div class="cfg-box">
+        <label>Questions per Round</label>
+        <input class="inp" id="cfg-q" type="number" min="5" max="15" value="10">
+      </div>
+    </div>
+
+    <div class="sec-lbl">Groups</div>
+    <div id="grp-rows"></div>
+    <button class="btn btn-gray"
+      style="padding:7px 14px;font-size:12px;margin-top:6px"
+      onclick="addRow()">+ Add Group</button>
+  </div>
+
+  <div class="s-ftr">
+    <p style="font-size:11px;color:#2a2a45">
+      Tip: Assign a different character to each group so questions don't repeat.
+    </p>
+    <button class="btn btn-green" onclick="startSession()">▶ Start Session</button>
+  </div>
+</div>
+
+<!-- ══════════ GROUP INTRO ══════════ -->
+<div id="s-intro" class="scr">
+  <div class="g-badge" id="intro-gname">Group 1</div>
+  <div id="intro-em">🧒</div>
+  <h2>Your character is <span id="intro-cname" style="color:#f0d060">Sam</span></h2>
+  <p>Get ready to read about <span id="intro-cname2">Sam</span>'s daily routine.<br>
+    Discuss together — then sort the statements on the belt!</p>
+  <button class="btn btn-gold" style="margin-top:10px" onclick="startReading()">
+    📖 Show Profile &amp; Start Reading Timer
+  </button>
+  <p class="note">Teacher: click when this group is standing at the front.</p>
+</div>
+
+<!-- ══════════ READING ══════════ -->
+<div id="s-read" class="scr">
+  <div id="read-hdr">
+    <div>
+      <div style="font-size:10px;color:#2a2a45;text-transform:uppercase;letter-spacing:1px">Now Reading</div>
+      <div id="read-gname" style="font-size:17px;font-weight:700;color:#fff">Group 1</div>
+    </div>
+    <div style="text-align:center">
+      <div id="read-tl">Time to read</div>
+      <div id="read-timer">60</div>
+    </div>
+    <div style="min-width:168px;text-align:right">
+      <button class="btn btn-gold" id="btn-begin" style="display:none"
+        onclick="beginGame()">▶ Start Game!</button>
+      <span id="read-wait" style="font-size:12px;color:#2a2a45">Reading…</span>
+    </div>
+  </div>
+
+  <div id="read-body">
+    <div id="read-em">🧒</div>
+    <div id="read-nm">Sam</div>
+    <div id="read-txt">…</div>
+  </div>
+
+  <div id="read-ftr">
+    <p style="font-size:11px;color:#2a2a45">
+      Read carefully — you will sort statements about this person!
+    </p>
+    <button class="btn btn-gray" style="padding:7px 14px;font-size:12px"
+      onclick="skipTimer()">Skip Timer →</button>
+  </div>
+</div>
+
+<!-- ══════════ GAME ══════════ -->
+<div id="s-game" class="scr">
+  <div id="hud">
+    <div class="hb">
+      <div class="hl">Group</div>
+      <div class="hv" id="hud-g" style="font-size:13px;color:#ddd">Group 1</div>
+    </div>
+    <div class="hb">
+      <div class="hl">Score</div>
+      <div class="hv" id="hud-sc">0</div>
+    </div>
+    <div class="hb">
+      <div class="hl">Question</div>
+      <div class="hv" id="hud-qn">1/10</div>
+    </div>
+    <div class="hb">
+      <div class="hl">Lives</div>
+      <div class="hv" id="hud-lv">❤️❤️❤️</div>
+    </div>
+    <div class="hb">
+      <div class="hl">Lifelines</div>
+      <div class="hv" id="hud-ll">💡💡</div>
+    </div>
+  </div>
+
+  <canvas id="gameCanvas"></canvas>
+
+  <div id="sort-wrap">
+    <button class="sb" id="btn-a" disabled onclick="act('always')">
+      Always<span class="kb">A</span>
+    </button>
+    <button class="sb" id="btn-s" disabled onclick="act('sometimes')">
+      Sometimes<span class="kb">S</span>
+    </button>
+    <button class="sb" id="btn-n" disabled onclick="act('never')">
+      Never<span class="kb">N</span>
+    </button>
+    <button class="sb" id="btn-ll" onclick="useLifeline()">💡 Hint<span class="kb">SPC</span></button>
+  </div>
+
+  <!-- Lifeline overlay (inside #s-game) -->
+  <div id="ll-ov">
+    <div style="font-size:10px;color:#444;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">
+      💡 Profile Reminder
+    </div>
+    <div id="ll-nm">Sam's Profile</div>
+    <div id="ll-txt">…</div>
+    <div id="ll-cd">10</div>
+    <div id="ll-cdl">seconds remaining</div>
+  </div>
+</div>
+
+<!-- ══════════ RESULT ══════════ -->
+<div id="s-result" class="scr">
+  <p id="res-glbl" style="color:#383860;font-size:13px">Group 1</p>
+  <h1 id="res-title">Well Done! 🌟</h1>
+  <div class="s-card">
+    <div class="lbl">Final Score</div>
+    <div class="big" id="res-sc">0</div>
+  </div>
+  <p id="res-stats">8 correct · 0 wrong · 3 lives remaining</p>
+  <div style="display:flex;gap:10px">
+    <button class="btn btn-gray" onclick="toggleReview()">📋 Review Answers</button>
+    <button class="btn btn-gold" id="btn-next" onclick="nextGroup()">Next Group →</button>
+  </div>
+  <div id="rv-list"></div>
+</div>
+
+<!-- ══════════ SCOREBOARD ══════════ -->
+<div id="s-board" class="scr">
+  <h1>🏆 Final Scoreboard</h1>
+  <table id="sb-tbl">
+    <thead>
+      <tr>
+        <th>Rank</th><th>Group</th><th>Character</th>
+        <th>Correct</th><th>Score</th>
+      </tr>
+    </thead>
+    <tbody id="sb-body"></tbody>
+  </table>
+  <div style="display:flex;gap:10px;margin-top:8px">
+    <button class="btn btn-gray" onclick="goHome()">🏠 Home</button>
+    <button class="btn btn-gold" onclick="showSetup()">🔄 Play Again</button>
+  </div>
+</div>
+
+</div><!-- #app -->
+
+<script>
+// ══════════════════════════════════════════════════════════════
+//  CHARACTER DATA  (10 characters × 18 statements each)
+// ══════════════════════════════════════════════════════════════
+const CHARS = [
+  {
+    name:"Sam", emoji:"🧒",
+    profile:`Sam is 9 years old. Every morning, he wakes up at 7 o'clock and eats a bowl of cereal. Sam always walks to school with his mum — he never travels by bus. At lunchtime, Sam sometimes eats sandwiches and sometimes eats fried rice. He sometimes drinks juice with his lunch. After school, he sometimes plays football with his friends. Sam always does his homework before watching television. He always brushes his teeth and goes to bed at 9 o'clock.`,
+    st:[
+      {s:"Sam wakes up at 7 o'clock in the morning.",         a:"always"},
+      {s:"Sam eats cereal for breakfast.",                    a:"always"},
+      {s:"Sam walks to school with his mum.",                 a:"always"},
+      {s:"Sam does his homework before watching television.", a:"always"},
+      {s:"Sam brushes his teeth before bed.",                 a:"always"},
+      {s:"Sam goes to bed at 9 o'clock.",                    a:"always"},
+      {s:"Sam has sandwiches for lunch.",                     a:"sometimes"},
+      {s:"Sam has fried rice for lunch.",                     a:"sometimes"},
+      {s:"Sam drinks juice with his lunch.",                  a:"sometimes"},
+      {s:"Sam plays football after school.",                  a:"sometimes"},
+      {s:"Sam plays with his friends after school.",          a:"sometimes"},
+      {s:"Sam watches television in the evening.",            a:"sometimes"},
+      {s:"Sam takes the bus to school.",                      a:"never"},
+      {s:"Sam watches television before doing his homework.", a:"never"},
+      {s:"Sam skips breakfast.",                              a:"never"},
+      {s:"Sam goes to bed at 10 o'clock.",                   a:"never"},
+      {s:"Sam eats toast for breakfast.",                     a:"never"},
+      {s:"Sam walks to school alone.",                        a:"never"},
+    ]
+  },
+  {
+    name:"Lily", emoji:"👧",
+    profile:`Lily is 9 years old. She wakes up at half past 6 every morning and always has toast and a glass of milk for breakfast. Lily takes the school bus every day and always sits next to her best friend, Priya. At lunchtime, she sometimes buys food from the school canteen and sometimes brings her own lunchbox. She sometimes has fruit as a snack after school. Lily always reads for 20 minutes when she gets home. She sometimes helps her mum set the table for dinner. Lily never goes to bed after 8 o'clock.`,
+    st:[
+      {s:"Lily wakes up at half past 6 in the morning.",   a:"always"},
+      {s:"Lily has toast for breakfast.",                   a:"always"},
+      {s:"Lily drinks milk in the morning.",                a:"always"},
+      {s:"Lily takes the school bus to school.",            a:"always"},
+      {s:"Lily sits next to Priya on the school bus.",      a:"always"},
+      {s:"Lily reads for 20 minutes after school.",         a:"always"},
+      {s:"Lily buys food from the school canteen.",         a:"sometimes"},
+      {s:"Lily brings her own lunchbox to school.",         a:"sometimes"},
+      {s:"Lily has fruit as a snack after school.",         a:"sometimes"},
+      {s:"Lily helps her mum set the table for dinner.",    a:"sometimes"},
+      {s:"Lily watches a cartoon before dinner.",           a:"sometimes"},
+      {s:"Lily shares her snack with Priya.",               a:"sometimes"},
+      {s:"Lily walks to school.",                           a:"never"},
+      {s:"Lily skips breakfast.",                           a:"never"},
+      {s:"Lily sits alone on the school bus.",              a:"never"},
+      {s:"Lily forgets to read after school.",              a:"never"},
+      {s:"Lily goes to bed after 8 o'clock.",              a:"never"},
+      {s:"Lily has cereal for breakfast.",                  a:"never"},
+    ]
+  },
+  {
+    name:"Aisha", emoji:"⚽",
+    profile:`Aisha is 9 years old and loves football. She wakes up at 6 o'clock every morning and always eats two fried eggs for breakfast. Aisha's dad drives her to school every day — she never walks to school. Aisha always brings a water bottle to school. At lunchtime, she sometimes eats noodles and sometimes eats rice with vegetables. After school, Aisha trains with the school football team three times a week. She sometimes watches football on television with her dad. Aisha always showers before dinner and goes to bed at half past 8.`,
+    st:[
+      {s:"Aisha wakes up at 6 o'clock in the morning.",       a:"always"},
+      {s:"Aisha eats fried eggs for breakfast.",               a:"always"},
+      {s:"Aisha's dad drives her to school.",                  a:"always"},
+      {s:"Aisha brings a water bottle to school.",             a:"always"},
+      {s:"Aisha showers before dinner.",                       a:"always"},
+      {s:"Aisha goes to bed at half past 8.",                 a:"always"},
+      {s:"Aisha eats noodles for lunch.",                      a:"sometimes"},
+      {s:"Aisha eats rice with vegetables for lunch.",         a:"sometimes"},
+      {s:"Aisha trains with the football team after school.",  a:"sometimes"},
+      {s:"Aisha watches football on television.",              a:"sometimes"},
+      {s:"Aisha watches television with her dad.",             a:"sometimes"},
+      {s:"Aisha feels tired after football training.",         a:"sometimes"},
+      {s:"Aisha walks to school.",                             a:"never"},
+      {s:"Aisha skips breakfast.",                             a:"never"},
+      {s:"Aisha forgets her water bottle.",                    a:"never"},
+      {s:"Aisha eats cereal for breakfast.",                   a:"never"},
+      {s:"Aisha takes the school bus.",                        a:"never"},
+      {s:"Aisha goes to bed at 9 o'clock.",                   a:"never"},
+    ]
+  },
+  {
+    name:"Ben", emoji:"🎨",
+    profile:`Ben is 9 years old and loves drawing. He wakes up at 7 o'clock every morning and always has pancakes for breakfast. Ben always cycles to school with his older brother — he never takes public transport. At school, Ben sometimes draws in his sketchbook during break time. He sometimes eats a wrap and sometimes eats pasta for lunch. After school, Ben always spends 30 minutes drawing in his room. He sometimes goes to the library with his mum. Ben always reads a comic book before bed and goes to sleep at 9 o'clock.`,
+    st:[
+      {s:"Ben wakes up at 7 o'clock in the morning.",       a:"always"},
+      {s:"Ben has pancakes for breakfast.",                  a:"always"},
+      {s:"Ben cycles to school with his older brother.",     a:"always"},
+      {s:"Ben spends 30 minutes drawing after school.",      a:"always"},
+      {s:"Ben reads a comic book before bed.",               a:"always"},
+      {s:"Ben goes to sleep at 9 o'clock.",                 a:"always"},
+      {s:"Ben draws in his sketchbook during break time.",   a:"sometimes"},
+      {s:"Ben eats a wrap for lunch.",                       a:"sometimes"},
+      {s:"Ben eats pasta for lunch.",                        a:"sometimes"},
+      {s:"Ben goes to the library with his mum.",            a:"sometimes"},
+      {s:"Ben draws pictures of his friends and family.",    a:"sometimes"},
+      {s:"Ben brings his sketchbook to the library.",        a:"sometimes"},
+      {s:"Ben takes public transport to school.",            a:"never"},
+      {s:"Ben cycles to school alone.",                      a:"never"},
+      {s:"Ben skips breakfast.",                             a:"never"},
+      {s:"Ben reads a storybook before bed.",                a:"never"},
+      {s:"Ben has toast for breakfast.",                     a:"never"},
+      {s:"Ben forgets to draw after school.",                a:"never"},
+    ]
+  },
+  {
+    name:"Zara", emoji:"🏖️",
+    profile:`Zara is 9 years old and lives near the beach. She wakes up at half past 6 every morning and always has fruit and yoghurt for breakfast. Zara always takes the school bus to school — she never walks. At lunchtime, she sometimes eats fish with rice and sometimes eats chicken with vegetables. After school, Zara sometimes swims at the beach with her family. She sometimes plays board games with her family in the evenings. Zara always helps to wash the dishes after dinner. She always packs her school bag before going to bed and goes to sleep at half past 8.`,
+    st:[
+      {s:"Zara wakes up at half past 6 in the morning.",   a:"always"},
+      {s:"Zara has fruit and yoghurt for breakfast.",       a:"always"},
+      {s:"Zara takes the school bus to school.",            a:"always"},
+      {s:"Zara helps wash the dishes after dinner.",        a:"always"},
+      {s:"Zara packs her school bag before bed.",           a:"always"},
+      {s:"Zara goes to sleep at half past 8.",             a:"always"},
+      {s:"Zara eats fish with rice for lunch.",             a:"sometimes"},
+      {s:"Zara eats chicken with vegetables for lunch.",    a:"sometimes"},
+      {s:"Zara swims at the beach after school.",           a:"sometimes"},
+      {s:"Zara goes to the beach after school.",            a:"sometimes"},
+      {s:"Zara plays board games with her family.",         a:"sometimes"},
+      {s:"Zara brings a snack from home to school.",        a:"sometimes"},
+      {s:"Zara walks to school.",                           a:"never"},
+      {s:"Zara skips breakfast.",                           a:"never"},
+      {s:"Zara leaves her school bag unpacked at night.",   a:"never"},
+      {s:"Zara has cereal for breakfast.",                  a:"never"},
+      {s:"Zara goes to bed after 9 o'clock.",              a:"never"},
+      {s:"Zara forgets to wash the dishes after dinner.",   a:"never"},
+    ]
+  },
+  {
+    name:"Tom", emoji:"👦",
+    profile:`Tom is 9 years old and has a little sister named Bella. He wakes up at 7 o'clock every morning and always has bread with butter and jam for breakfast. Tom's mum drives both Tom and Bella to school every day — Tom never cycles to school. At break time, Tom sometimes plays with Bella and sometimes plays with his classmates. He sometimes eats noodle soup for lunch and sometimes brings a packed lunch from home. Tom always reads for 10 minutes after school. He sometimes helps his mum look after Bella in the evenings. Tom always goes to bed at 9 o'clock.`,
+    st:[
+      {s:"Tom wakes up at 7 o'clock in the morning.",         a:"always"},
+      {s:"Tom eats bread with butter and jam for breakfast.",  a:"always"},
+      {s:"Tom's mum drives him to school.",                    a:"always"},
+      {s:"Tom and Bella travel to school together.",           a:"always"},
+      {s:"Tom reads for 10 minutes after school.",             a:"always"},
+      {s:"Tom goes to bed at 9 o'clock.",                     a:"always"},
+      {s:"Tom plays with Bella at break time.",                a:"sometimes"},
+      {s:"Tom plays with his classmates at break time.",       a:"sometimes"},
+      {s:"Tom eats noodle soup for lunch.",                    a:"sometimes"},
+      {s:"Tom brings a packed lunch from home.",               a:"sometimes"},
+      {s:"Tom helps his mum look after Bella.",                a:"sometimes"},
+      {s:"Tom has a glass of milk before bed.",                a:"sometimes"},
+      {s:"Tom cycles to school.",                              a:"never"},
+      {s:"Tom goes to school without his sister Bella.",       a:"never"},
+      {s:"Tom skips breakfast.",                               a:"never"},
+      {s:"Tom has eggs for breakfast.",                        a:"never"},
+      {s:"Tom forgets to read after school.",                  a:"never"},
+      {s:"Tom goes to bed at 10 o'clock.",                    a:"never"},
+    ]
+  },
+  {
+    name:"Mia", emoji:"🍳",
+    profile:`Mia is 9 years old and loves cooking. She wakes up at half past 6 every morning and always has oats with honey for breakfast. Mia always walks to school with her neighbour, Jake — she never goes to school by car. At lunchtime, Mia always eats in the school canteen. She sometimes has fried noodles and sometimes has mixed rice for lunch. After school, Mia sometimes helps her grandmother cook dinner. She sometimes tries new recipes from a cookbook. Mia always washes her hands before every meal and goes to bed at 9 o'clock.`,
+    st:[
+      {s:"Mia wakes up at half past 6 in the morning.",     a:"always"},
+      {s:"Mia has oats with honey for breakfast.",           a:"always"},
+      {s:"Mia walks to school with Jake.",                   a:"always"},
+      {s:"Mia eats in the school canteen at lunchtime.",     a:"always"},
+      {s:"Mia washes her hands before every meal.",          a:"always"},
+      {s:"Mia goes to bed at 9 o'clock.",                   a:"always"},
+      {s:"Mia has fried noodles for lunch.",                 a:"sometimes"},
+      {s:"Mia has mixed rice for lunch.",                    a:"sometimes"},
+      {s:"Mia helps her grandmother cook dinner.",            a:"sometimes"},
+      {s:"Mia tries new recipes from a cookbook.",           a:"sometimes"},
+      {s:"Mia eats a biscuit as a snack after school.",      a:"sometimes"},
+      {s:"Mia reads recipes before bed.",                    a:"sometimes"},
+      {s:"Mia goes to school by car.",                       a:"never"},
+      {s:"Mia walks to school alone.",                       a:"never"},
+      {s:"Mia skips breakfast.",                             a:"never"},
+      {s:"Mia has toast for breakfast.",                     a:"never"},
+      {s:"Mia eats lunch at home.",                          a:"never"},
+      {s:"Mia eats without washing her hands first.",        a:"never"},
+    ]
+  },
+  {
+    name:"Jake", emoji:"🏊",
+    profile:`Jake is 9 years old and loves swimming. He wakes up at 6 o'clock every morning and always has a banana and a glass of water before school. Jake always walks to school with his neighbour, Mia — he never cycles to school. At lunchtime, Jake sometimes has sandwiches and sometimes buys food from the school canteen. After school on Tuesdays and Thursdays, Jake always goes to swimming class. He sometimes swims at the local pool on weekends. Jake always stretches before swimming. He sometimes watches swimming competitions on television. He goes to bed at 8 o'clock every night.`,
+    st:[
+      {s:"Jake wakes up at 6 o'clock in the morning.",             a:"always"},
+      {s:"Jake eats a banana before school.",                       a:"always"},
+      {s:"Jake drinks a glass of water in the morning.",            a:"always"},
+      {s:"Jake walks to school with Mia.",                          a:"always"},
+      {s:"Jake goes to swimming class on Tuesdays and Thursdays.",  a:"always"},
+      {s:"Jake stretches before swimming.",                          a:"always"},
+      {s:"Jake goes to bed at 8 o'clock.",                         a:"always"},
+      {s:"Jake has sandwiches for lunch.",                           a:"sometimes"},
+      {s:"Jake buys food from the school canteen.",                 a:"sometimes"},
+      {s:"Jake swims at the local pool on weekends.",               a:"sometimes"},
+      {s:"Jake watches swimming competitions on television.",        a:"sometimes"},
+      {s:"Jake cycles to school.",                                   a:"never"},
+      {s:"Jake walks to school alone.",                              a:"never"},
+      {s:"Jake skips breakfast.",                                    a:"never"},
+      {s:"Jake swims without stretching first.",                     a:"never"},
+      {s:"Jake goes to bed after 9 o'clock.",                       a:"never"},
+      {s:"Jake goes to swimming class on Mondays.",                  a:"never"},
+      {s:"Jake forgets to bring water in the morning.",              a:"never"},
+    ]
+  },
+  {
+    name:"Nadia", emoji:"📚",
+    profile:`Nadia is 9 years old and loves reading. She wakes up at half past 6 every morning and always has two slices of wholemeal toast for breakfast. Nadia always goes to school by car with her dad — she never takes the school bus. She sometimes borrows books from the school library at break time. At lunchtime, Nadia always eats with her best friend, Sara. She sometimes has rice and curry for lunch and sometimes has a sandwich. After school, Nadia always reads for at least 30 minutes. She sometimes goes to the public library with her dad on Saturdays. Nadia always writes in her diary before bed and goes to sleep at 9 o'clock.`,
+    st:[
+      {s:"Nadia wakes up at half past 6 in the morning.",        a:"always"},
+      {s:"Nadia has wholemeal toast for breakfast.",              a:"always"},
+      {s:"Nadia goes to school by car with her dad.",             a:"always"},
+      {s:"Nadia eats lunch with Sara.",                           a:"always"},
+      {s:"Nadia reads for at least 30 minutes after school.",     a:"always"},
+      {s:"Nadia writes in her diary before bed.",                 a:"always"},
+      {s:"Nadia borrows books from the school library.",          a:"sometimes"},
+      {s:"Nadia has rice and curry for lunch.",                   a:"sometimes"},
+      {s:"Nadia has a sandwich for lunch.",                       a:"sometimes"},
+      {s:"Nadia goes to the public library on Saturdays.",        a:"sometimes"},
+      {s:"Nadia reads two books in one week.",                    a:"sometimes"},
+      {s:"Nadia recommends books to her classmates.",             a:"sometimes"},
+      {s:"Nadia takes the school bus.",                           a:"never"},
+      {s:"Nadia skips breakfast.",                                a:"never"},
+      {s:"Nadia eats lunch without Sara.",                        a:"never"},
+      {s:"Nadia forgets to write in her diary.",                  a:"never"},
+      {s:"Nadia has eggs for breakfast.",                         a:"never"},
+      {s:"Nadia goes to bed without reading first.",              a:"never"},
+    ]
+  },
+  {
+    name:"Ethan", emoji:"♟️",
+    profile:`Ethan is 9 years old and loves playing chess. He wakes up at 7 o'clock every morning and always has scrambled eggs on toast for breakfast. Ethan always takes the school bus to school — he never walks. At break time, Ethan sometimes plays chess with his friend Leo and sometimes reads a book. He sometimes has chicken rice for lunch and sometimes has a salad wrap. After school, Ethan always goes to chess club on Wednesdays. He sometimes plays chess with his grandfather in the evenings. Ethan always does his homework right after dinner and goes to bed at half past 8 every night.`,
+    st:[
+      {s:"Ethan wakes up at 7 o'clock in the morning.",      a:"always"},
+      {s:"Ethan has scrambled eggs on toast for breakfast.",  a:"always"},
+      {s:"Ethan takes the school bus to school.",             a:"always"},
+      {s:"Ethan goes to chess club on Wednesdays.",           a:"always"},
+      {s:"Ethan does his homework right after dinner.",       a:"always"},
+      {s:"Ethan goes to bed at half past 8.",                a:"always"},
+      {s:"Ethan plays chess with Leo at break time.",         a:"sometimes"},
+      {s:"Ethan reads a book at break time.",                 a:"sometimes"},
+      {s:"Ethan has chicken rice for lunch.",                 a:"sometimes"},
+      {s:"Ethan has a salad wrap for lunch.",                 a:"sometimes"},
+      {s:"Ethan plays chess with his grandfather.",           a:"sometimes"},
+      {s:"Ethan watches chess videos online.",                a:"sometimes"},
+      {s:"Ethan walks to school.",                            a:"never"},
+      {s:"Ethan skips breakfast.",                            a:"never"},
+      {s:"Ethan misses chess club on Wednesdays.",            a:"never"},
+      {s:"Ethan does his homework before dinner.",            a:"never"},
+      {s:"Ethan has cereal for breakfast.",                   a:"never"},
+      {s:"Ethan goes to bed at 9 o'clock.",                  a:"never"},
+    ]
+  },
+];
+
+const COL = {always:"#27ae60", sometimes:"#e67e22", never:"#e74c3c"};
+
+// ══════════════════════════════════════════════════════════════
+//  SESSION STATE
+// ══════════════════════════════════════════════════════════════
+let session     = null;
+let curGrpIdx   = 0;
+let rtInterval  = null;   // reading timer interval
+let llInterval  = null;   // lifeline countdown interval
+let reviewData  = null;   // last finished group's history
+
+// ══════════════════════════════════════════════════════════════
+//  SCREEN MANAGEMENT
+// ══════════════════════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.scr').forEach(s => s.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+}
+
+// ══════════════════════════════════════════════════════════════
+//  SETUP SCREEN
+// ══════════════════════════════════════════════════════════════
+let rowSeq = 0;
+
+function showSetup() {
+  stopBGM(); stopConfetti();
+  if (!document.getElementById('grp-rows').children.length) {
+    for (let i = 0; i < 4; i++) addRow();
+  }
+  showScreen('s-setup');
+}
+
+function addRow() {
+  if (document.querySelectorAll('.grp-row').length >= 10) return;
+  rowSeq++;
+  const n = rowSeq;
+  const opts = CHARS.map((c, i) =>
+    `<option value="${i}">${c.emoji} ${c.name}</option>`).join('');
+  const div = document.createElement('div');
+  div.className = 'grp-row'; div.id = `gr-${n}`;
+  div.innerHTML = `
+    <div class="grp-num">${document.querySelectorAll('.grp-row').length + 1}</div>
+    <input class="inp" id="gn-${n}" placeholder="Group name" value="Group ${document.querySelectorAll('.grp-row').length + 1}">
+    <select class="inp" id="gc-${n}">${opts}</select>
+    <button class="rm-btn" onclick="rmRow(${n})">✕</button>`;
+  div.querySelector(`#gc-${n}`).value =
+    (document.querySelectorAll('.grp-row').length) % CHARS.length;
+  document.getElementById('grp-rows').appendChild(div);
+  renumberRows();
+}
+
+function rmRow(n) {
+  const el = document.getElementById(`gr-${n}`);
+  if (el) { el.remove(); renumberRows(); }
+}
+
+function renumberRows() {
+  document.querySelectorAll('.grp-row').forEach((row, i) => {
+    row.querySelector('.grp-num').textContent = i + 1;
+  });
+}
+
+function startSession() {
+  const rows = document.querySelectorAll('.grp-row');
+  if (rows.length < 2) { alert('Please add at least 2 groups.'); return; }
+
+  const readTime = clamp(parseInt(document.getElementById('cfg-rt').value) || 60, 20, 180);
+  const ansTime  = clamp(parseInt(document.getElementById('cfg-at').value) || 8,  3,  20);
+  const numQ     = clamp(parseInt(document.getElementById('cfg-q').value)  || 10, 5,  15);
+
+  const groups = [];
+  rows.forEach(row => {
+    const id   = row.id.replace('gr-', '');
+    const name = (document.getElementById(`gn-${id}`).value.trim()) ||
+                 `Group ${groups.length + 1}`;
+    const cid  = parseInt(document.getElementById(`gc-${id}`).value);
+    groups.push({ name, cid, score:0, correct:0, total:0, lives:3, history:[], done:false });
+  });
+
+  session   = { groups, readTime, ansTime, numQ };
+  curGrpIdx = 0;
+  showGroupIntro(0);
+}
+
+function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+// ══════════════════════════════════════════════════════════════
+//  GROUP FLOW
+// ══════════════════════════════════════════════════════════════
+function showGroupIntro(idx) {
+  const g  = session.groups[idx];
+  const ch = CHARS[g.cid];
+  document.getElementById('intro-gname').textContent  = g.name;
+  document.getElementById('intro-em').textContent     = ch.emoji;
+  document.getElementById('intro-cname').textContent  = ch.name;
+  document.getElementById('intro-cname2').textContent = ch.name;
+  showScreen('s-intro');
+}
+
+function startReading() {
+  const g  = session.groups[curGrpIdx];
+  const ch = CHARS[g.cid];
+
+  document.getElementById('read-gname').textContent = g.name;
+  document.getElementById('read-em').textContent    = ch.emoji;
+  document.getElementById('read-nm').textContent    = ch.name;
+  document.getElementById('read-txt').textContent   = ch.profile;
+
+  document.getElementById('btn-begin').style.display  = 'none';
+  document.getElementById('read-wait').style.display  = 'inline';
+  document.getElementById('read-timer').style.color   = '#f0d060';
+
+  let secs = session.readTime;
+  document.getElementById('read-timer').textContent = secs;
+  clearInterval(rtInterval);
+
+  rtInterval = setInterval(() => {
+    secs--;
+    document.getElementById('read-timer').textContent = secs;
+    if (secs <= 5 && secs > 0) SFX.tick();
+    if (secs <= 0) {
+      clearInterval(rtInterval);
+      SFX.beep();
+      document.getElementById('btn-begin').style.display = 'inline-block';
+      document.getElementById('read-wait').style.display = 'none';
+      document.getElementById('read-timer').style.color  = '#e74c3c';
+    }
+  }, 1000);
+
+  showScreen('s-read');
+}
+
+function skipTimer() {
+  clearInterval(rtInterval);
+  document.getElementById('btn-begin').style.display = 'inline-block';
+  document.getElementById('read-wait').style.display = 'none';
+  document.getElementById('read-timer').textContent  = '—';
+}
+
+function beginGame() {
+  clearInterval(rtInterval);
+  document.getElementById('read-timer').style.color = '#f0d060';
+  showScreen('s-game');
+  setupCanvas();
+  initGame();
+  startLoop();
+}
+
+function nextGroup() {
+  stopBGM();
+  curGrpIdx++;
+  if (curGrpIdx < session.groups.length) {
+    showGroupIntro(curGrpIdx);
+  } else {
+    buildScoreboard();
+    showScreen('s-board');
+    launchConfetti();
+  }
+}
+
+function goHome() {
+  stopBGM(); stopConfetti();
+  showScreen('s-land');
+}
+
+// ══════════════════════════════════════════════════════════════
+//  CANVAS SETUP
+// ══════════════════════════════════════════════════════════════
+const cv  = document.getElementById('gameCanvas');
+const ctx = cv.getContext('2d');
+let W, H, BELT_Y, BELT_H, BOX_W, BOX_H, BOX_Y, STOP_X, START_X, END_R, END_L;
+
+function setupCanvas() {
+  cv.width  = cv.offsetWidth  || 980;
+  cv.height = cv.offsetHeight || 470;
+  W = cv.width; H = cv.height;
+  BELT_Y  = Math.round(H * 0.585);
+  BELT_H  = 44;
+  BOX_W   = Math.min(340, Math.round(W * 0.355));
+  BOX_H   = 100;
+  BOX_Y   = BELT_Y - BOX_H + 10;
+  STOP_X  = Math.round((W - BOX_W) / 2);
+  START_X = -BOX_W - 60;
+  END_R   = W + 130;
+  END_L   = -BOX_W - 130;
+}
+
+// ══════════════════════════════════════════════════════════════
+//  GAME STATE & INIT
+// ══════════════════════════════════════════════════════════════
+let gs      = null;
+let raf     = null;
+let prevT   = 0;
+let active  = false;
+
+function initGame() {
+  const g  = session.groups[curGrpIdx];
+  const ch = CHARS[g.cid];
+
+  const pool = shuffle([...ch.st]).slice(0, session.numQ);
+
+  gs = {
+    phase:       'idle',
+    score:       0,
+    lives:       3,
+    llLeft:      2,
+    btnOn:       false,
+    questions:   pool,
+    qIdx:        0,
+    current:     null,
+    timerProg:   1,
+    ansMs:       session.ansTime * 1000,
+    boxX:        START_X,
+    goRight:     true,
+    isCorrect:   false,
+    bgOff:       0,
+    sparks:      [],
+    shake:       0,
+    history:     [],
+  };
+
+  document.getElementById('hud-g').textContent   = g.name;
+  document.getElementById('ll-nm').textContent   = ch.name + "'s Profile";
+  document.getElementById('ll-txt').textContent  = ch.profile;
+  document.getElementById('ll-ov').classList.remove('on');
+  updateHUD();
+  loadQ();
+  startBGM();
+}
+
+function loadQ() {
+  if (gs.qIdx >= gs.questions.length) { endRound(); return; }
+  gs.current    = gs.questions[gs.qIdx];
+  gs.boxX       = START_X;
+  gs.timerProg  = 1;
+  gs.btnOn      = false;
+  gs.phase      = 'entering';
+  setBtns(false);
+  updateHUD();
+}
+
+function setBtns(on) {
+  ['btn-a','btn-s','btn-n'].forEach(id =>
+    document.getElementById(id).disabled = !on);
+  const ll = document.getElementById('btn-ll');
+  ll.disabled = !on || gs.llLeft <= 0;
+}
+
+function updateHUD() {
+  document.getElementById('hud-sc').textContent = gs.score;
+  document.getElementById('hud-qn').textContent =
+    `${Math.min(gs.qIdx + 1, gs.questions.length)}/${gs.questions.length}`;
+  document.getElementById('hud-lv').textContent =
+    '❤️'.repeat(Math.max(0, gs.lives)) + '🖤'.repeat(Math.max(0, 3 - gs.lives));
+  document.getElementById('hud-ll').textContent =
+    gs.llLeft > 0 ? '💡'.repeat(gs.llLeft) : '—';
+}
+
+// ══════════════════════════════════════════════════════════════
+//  GAME ACTIONS
+// ══════════════════════════════════════════════════════════════
+function act(choice) {
+  if (!gs.btnOn || gs.phase !== 'waiting') return;
+  gs.btnOn = false; setBtns(false);
+
+  const ok = choice === gs.current.a;
+  gs.history.push({ s: gs.current.s, ok, player: choice, correct: gs.current.a });
+  gs.qIdx++;
+
+  if (ok) {
+    gs.score     += 100 + Math.floor(gs.timerProg * 50);
+    gs.isCorrect  = true;
+    gs.goRight    = true;
+    SFX.correct();
+    spawnSparks(W / 2, BOX_Y + BOX_H / 2, COL[gs.current.a]);
+  } else {
+    gs.lives--;
+    gs.isCorrect = false;
+    gs.goRight   = false;
+    SFX.wrong();
+    gs.shake = 320;
+    if (gs.lives <= 0) {
+      gs.phase = 'dying';
+      updateHUD();
+      setTimeout(endRound, 1400);
+      return;
+    }
+  }
+  gs.phase = 'exiting';
+  updateHUD();
+}
+
+function timeOut() {
+  gs.history.push({ s: gs.current.s, ok: false, player: '(time)', correct: gs.current.a });
+  gs.qIdx++;
+  gs.lives--;
+  gs.isCorrect = false;
+  gs.goRight   = false;
+  SFX.wrong();
+  gs.shake = 320;
+  if (gs.lives <= 0) {
+    setBtns(false); gs.btnOn = false;
+    gs.phase = 'dying';
+    updateHUD();
+    setTimeout(endRound, 1400);
+    return;
+  }
+  gs.phase = 'exiting';
+  updateHUD();
+}
+
+function endRound() {
+  active = false;
+  if (raf) { cancelAnimationFrame(raf); raf = null; }
+  stopBGM();
+
+  const g    = session.groups[curGrpIdx];
+  g.score    = gs.score;
+  g.correct  = gs.history.filter(h => h.ok).length;
+  g.total    = gs.qIdx;
+  g.lives    = gs.lives;
+  g.history  = gs.history;
+  g.done     = true;
+  reviewData = g;
+
+  const ch    = CHARS[g.cid];
+  const pct   = g.correct / gs.questions.length;
+  const title = pct >= 0.8 ? 'Excellent! 🌟' : pct >= 0.5 ? 'Well Done! 👍' : 'Good Try! 💪';
+
+  document.getElementById('res-glbl').textContent  =
+    `${g.name} · ${ch.emoji} ${ch.name}`;
+  document.getElementById('res-title').textContent = title;
+  document.getElementById('res-sc').textContent    = g.score;
+  document.getElementById('res-stats').textContent =
+    `${g.correct} correct · ${g.total - g.correct} wrong · ${Math.max(0, g.lives)} ${g.lives === 1 ? 'life' : 'lives'} remaining`;
+  document.getElementById('rv-list').innerHTML = '';
+  document.getElementById('rv-list').style.display = 'none';
+
+  const isLast = curGrpIdx >= session.groups.length - 1;
+  const nb = document.getElementById('btn-next');
+  nb.textContent = isLast ? '🏆 Reveal Scoreboard' : 'Next Group →';
+  nb.onclick     = isLast ? revealBoard : nextGroup;
+
+  showScreen('s-result');
+}
+
+function toggleReview() {
+  const el = document.getElementById('rv-list');
+  if (!reviewData) return;
+  if (!el.innerHTML) {
+    el.innerHTML = reviewData.history.map(h => `
+      <div class="rv ${h.ok ? 'ok' : 'bad'}">
+        <span>${h.ok ? '✅' : '❌'}</span>
+        <span class="stmt">${h.s}</span>
+        <span class="ans">${h.correct.toUpperCase()}</span>
+      </div>`).join('');
+  }
+  el.style.display = el.style.display === 'block' ? 'none' : 'block';
+}
+
+// ══════════════════════════════════════════════════════════════
+//  LIFELINE
+// ══════════════════════════════════════════════════════════════
+function useLifeline() {
+  if (gs.llLeft <= 0 || gs.phase !== 'waiting' || !gs.btnOn) return;
+  gs.llLeft--;
+  gs.phase = 'lifeline';
+  setBtns(false);
+  updateHUD();
+
+  let secs = 10;
+  document.getElementById('ll-cd').textContent = secs;
+  document.getElementById('ll-ov').classList.add('on');
+
+  clearInterval(llInterval);
+  llInterval = setInterval(() => {
+    secs--;
+    document.getElementById('ll-cd').textContent = secs;
+    if (secs <= 3) SFX.tick();
+    if (secs <= 0) {
+      clearInterval(llInterval);
+      document.getElementById('ll-ov').classList.remove('on');
+      gs.phase = 'waiting';
+      gs.btnOn = true;
+      setBtns(true);
+    }
+  }, 1000);
+}
+
+// ══════════════════════════════════════════════════════════════
+//  SCOREBOARD
+// ══════════════════════════════════════════════════════════════
+function revealBoard() {
+  buildScoreboard();
+  showScreen('s-board');
+  launchConfetti();
+}
+
+function buildScoreboard() {
+  const sorted = [...session.groups].sort((a, b) => b.score - a.score);
+  document.getElementById('sb-body').innerHTML = sorted.map((g, i) => {
+    const r   = i + 1;
+    const med = r === 1 ? '🥇' : r === 2 ? '🥈' : r === 3 ? '🥉' : `${r}.`;
+    return `<tr class="${r <= 3 ? 'rk' + r : ''}">
+      <td>${med}</td>
+      <td>${g.name}</td>
+      <td>${CHARS[g.cid].emoji} ${CHARS[g.cid].name}</td>
+      <td>${g.correct}/${g.total || session.numQ}</td>
+      <td><strong>${g.score}</strong></td>
+    </tr>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════════════
+//  GAME LOOP
+// ══════════════════════════════════════════════════════════════
+function startLoop() {
+  active = true;
+  prevT  = performance.now();
+  raf    = requestAnimationFrame(loop);
+}
+
+function loop(t) {
+  const dt = Math.min(t - prevT, 80);
+  prevT = t;
+  try { update(dt); render(); } catch(e) { console.warn('Loop error:', e); }
+  if (active) raf = requestAnimationFrame(loop);
+}
+
+function update(dt) {
+  if (!gs || gs.phase === 'idle' || gs.phase === 'lifeline') return;
+
+  gs.bgOff = (gs.bgOff + dt * 0.11) % 40;
+  if (gs.shake > 0) gs.shake = Math.max(0, gs.shake - dt);
+
+  // Sparkles
+  gs.sparks = gs.sparks.filter(s => s.life > 0.01);
+  gs.sparks.forEach(s => {
+    const f = dt / 16;
+    s.x += s.vx * f; s.y += s.vy * f;
+    s.vy += 0.28 * f;
+    s.life -= 0.02 * f;
+  });
+
+  if (gs.phase === 'entering') {
+    gs.boxX += 390 * dt / 1000;
+    if (gs.boxX >= STOP_X) {
+      gs.boxX = STOP_X;
+      gs.phase = 'waiting';
+      gs.btnOn = true;
+      setBtns(true);
+    }
+  } else if (gs.phase === 'waiting') {
+    gs.timerProg -= dt / gs.ansMs;
+    if (gs.timerProg < 0.3 && gs.timerProg > 0) {
+      const now  = Math.floor(gs.timerProg * 22);
+      const prev = Math.floor((gs.timerProg + dt / gs.ansMs) * 22);
+      if (now !== prev) SFX.tick();
+    }
+    if (gs.timerProg <= 0) {
+      gs.timerProg = 0;
+      setBtns(false); gs.btnOn = false;
+      timeOut();
+    }
+  } else if (gs.phase === 'exiting') {
+    const spd = 420;
+    if (gs.goRight) {
+      gs.boxX += spd * dt / 1000;
+      if (gs.boxX > END_R) loadQ();
+    } else {
+      gs.boxX -= spd * dt / 1000;
+      if (gs.boxX < END_L) loadQ();
+    }
+  } else if (gs.phase === 'dying') {
+    gs.boxX += 2.2 * dt / 16;
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  RENDER
+// ══════════════════════════════════════════════════════════════
+function render() {
+  if (!W || !H) return;
+  ctx.clearRect(0, 0, W, H);
+
+  let sx = 0, sy = 0;
+  if (gs && gs.shake > 0) {
+    sx = (Math.random() - .5) * 9 * (gs.shake / 320);
+    sy = (Math.random() - .5) * 9 * (gs.shake / 320);
+  }
+  ctx.save();
+  ctx.translate(sx, sy);
+  drawBG();
+  drawBelt();
+  drawBins();
+  if (gs && gs.current) drawBox();
+  drawSparks();
+  drawTimerBar();
+  ctx.restore();
+}
+
+function rr(x, y, w, h, r) {
+  r = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function drawBG() {
+  const grd = ctx.createLinearGradient(0, 0, 0, H);
+  grd.addColorStop(0, '#1c1c38'); grd.addColorStop(1, '#12122a');
+  ctx.fillStyle = grd; ctx.fillRect(0, 0, W, H);
+
+  // Brick rows
+  ctx.fillStyle = 'rgba(255,255,255,0.022)';
+  for (let r = 0; r < 10; r++)
+    for (let c = 0; c < 16; c++)
+      ctx.fillRect(c * 66 + (r % 2 ? 33 : 0), r * 38 + 1, 62, 33);
+
+  // Ceiling
+  ctx.fillStyle = '#1a1a32'; ctx.fillRect(0, 0, W, 26);
+
+  // Pipes / ducts
+  [[55,26,22,52],[250,26,18,40],[490,26,26,60],[700,26,20,46],[850,26,18,36]].forEach(([px,py,pw,ph]) => {
+    ctx.fillStyle = '#252248'; ctx.fillRect(px, py, pw, ph);
+    ctx.fillStyle = '#303060'; ctx.fillRect(px, py, pw, 5);
+  });
+
+  // Hanging lamps
+  [140, 430, 760].forEach(lx => {
+    ctx.fillStyle = '#252248'; ctx.fillRect(lx - 2, 0, 4, 28);
+    const lg = ctx.createRadialGradient(lx, 36, 2, lx, 36, 42);
+    lg.addColorStop(0, 'rgba(255,240,130,.17)');
+    lg.addColorStop(1, 'rgba(255,240,130,0)');
+    ctx.fillStyle = lg; ctx.fillRect(lx - 42, 26, 84, 58);
+    ctx.fillStyle = '#f0e060';
+    ctx.beginPath(); ctx.arc(lx, 36, 6, 0, Math.PI * 2); ctx.fill();
+  });
+}
+
+function drawBelt() {
+  // Floor below belt
+  ctx.fillStyle = '#1a1a2e';
+  ctx.fillRect(0, BELT_Y + BELT_H, W, H - BELT_Y - BELT_H);
+
+  // Legs
+  [80, 240, 430, 640, 840].forEach(lx => {
+    ctx.fillStyle = '#202038';
+    ctx.fillRect(lx, BELT_Y + BELT_H, 18, H - BELT_Y - BELT_H);
+  });
+
+  // Belt body
+  const bg = ctx.createLinearGradient(0, BELT_Y, 0, BELT_Y + BELT_H);
+  bg.addColorStop(0, '#6a5040'); bg.addColorStop(.5, '#5a3f2e'); bg.addColorStop(1, '#3a2518');
+  ctx.fillStyle = bg; ctx.fillRect(0, BELT_Y, W, BELT_H);
+
+  // Moving stripes
+  ctx.strokeStyle = 'rgba(255,255,255,.12)'; ctx.lineWidth = 3;
+  for (let x = -40 + gs.bgOff; x < W + 40; x += 40) {
+    ctx.beginPath(); ctx.moveTo(x, BELT_Y); ctx.lineTo(x, BELT_Y + BELT_H); ctx.stroke();
+  }
+
+  // Edge highlights
+  ctx.fillStyle = 'rgba(255,255,255,.08)'; ctx.fillRect(0, BELT_Y, W, 3);
+  ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(0, BELT_Y + BELT_H - 3, W, 3);
+
+  // End rollers
+  [0, W].forEach(rx => {
+    const rg = ctx.createRadialGradient(rx, BELT_Y + BELT_H/2, 2, rx, BELT_Y + BELT_H/2, BELT_H/2);
+    rg.addColorStop(0, '#888'); rg.addColorStop(1, '#444');
+    ctx.fillStyle = rg;
+    ctx.beginPath(); ctx.arc(rx, BELT_Y + BELT_H / 2, BELT_H / 2, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#666'; ctx.lineWidth = 2; ctx.stroke();
+  });
+}
+
+function drawBins() {
+  const bw = 128, bh = 58;
+  const by = BELT_Y + BELT_H + 48;
+  const bins = [
+    { label:'ALWAYS',    color:COL.always,    bx:18 },
+    { label:'SOMETIMES', color:COL.sometimes, bx:(W - bw) / 2 },
+    { label:'NEVER',     color:COL.never,     bx:W - bw - 18 },
+  ];
+  bins.forEach(b => {
+    ctx.fillStyle = 'rgba(0,0,0,.28)';
+    rr(b.bx+4, by+4, bw, bh, 6); ctx.fill();
+    ctx.fillStyle = b.color + '22';
+    ctx.strokeStyle = b.color; ctx.lineWidth = 2.5;
+    rr(b.bx, by, bw, bh, 6); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = b.color;
+    ctx.font = 'bold 13px Segoe UI'; ctx.textAlign = 'center';
+    ctx.fillText(b.label, b.bx + bw / 2, by + bh / 2 + 5);
+  });
+}
+
+function drawBox() {
+  const x = Math.round(gs.boxX), y = BOX_Y, q = gs.current;
+
+  // Shadow
+  ctx.fillStyle = 'rgba(0,0,0,.25)';
+  rr(x + 8, y + BOX_H, BOX_W, 14, 4); ctx.fill();
+
+  // Box fill colour
+  let fill = '#7a5618';
+  if (gs.phase === 'waiting') {
+    fill = gs.timerProg < 0.25 ? '#7a1818' : '#7a5618';
+  } else if (gs.phase === 'exiting' || gs.phase === 'dying') {
+    fill = gs.isCorrect ? COL[q.a] + 'bb' : '#7a1818';
+  }
+
+  ctx.fillStyle = fill; ctx.strokeStyle = '#4a3300'; ctx.lineWidth = 3;
+  rr(x, y, BOX_W, BOX_H, 7); ctx.fill(); ctx.stroke();
+
+  // Wood grain
+  ctx.strokeStyle = 'rgba(0,0,0,.18)'; ctx.lineWidth = 1.5;
+  [y+20, y+45, y+70].forEach(ly => {
+    if (ly < y + BOX_H - 4) {
+      ctx.beginPath(); ctx.moveTo(x+6, ly); ctx.lineTo(x+BOX_W-6, ly); ctx.stroke();
+    }
+  });
+
+  // Cross brace
+  ctx.strokeStyle = 'rgba(0,0,0,.22)'; ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.moveTo(x+10, y+8); ctx.lineTo(x+BOX_W-10, y+BOX_H-8); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x+BOX_W-10, y+8); ctx.lineTo(x+10, y+BOX_H-8); ctx.stroke();
+
+  // Statement text (word-wrap)
+  ctx.font = 'bold 16px Segoe UI'; ctx.textAlign = 'center';
+  const words = q.s.split(' '), maxW = BOX_W - 28;
+  const lines = []; let line = '';
+  words.forEach(w => {
+    const t = line + (line ? ' ' : '') + w;
+    if (ctx.measureText(t).width > maxW && line) { lines.push(line); line = w; }
+    else line = t;
+  });
+  lines.push(line);
+  const lh = 21, tot = lines.length * lh;
+  const ty = y + BOX_H / 2 - tot / 2 + lh / 2;
+  // shadow
+  ctx.fillStyle = 'rgba(0,0,0,.45)';
+  lines.forEach((l, i) => ctx.fillText(l, x + BOX_W/2 + 1, ty + i*lh + 1));
+  ctx.fillStyle = '#fff';
+  lines.forEach((l, i) => ctx.fillText(l, x + BOX_W/2, ty + i*lh));
+
+  // Exit feedback
+  if (gs.phase === 'exiting' || gs.phase === 'dying') {
+    ctx.font = '26px serif'; ctx.textAlign = 'center';
+    ctx.fillText(gs.isCorrect ? '✓' : '✗', x + BOX_W/2, y - 10);
+    if (!gs.isCorrect) {
+      ctx.font = 'bold 12px Segoe UI'; ctx.fillStyle = COL[q.a];
+      ctx.fillText('Answer: ' + q.a.toUpperCase(), x + BOX_W/2, y - 26);
+    }
+  }
+}
+
+function drawTimerBar() {
+  if (!gs || gs.phase !== 'waiting') return;
+  const bx = 28, by = 8, bw = W - 56, bh = 12;
+  ctx.fillStyle = 'rgba(0,0,0,.42)';
+  rr(bx, by, bw, bh, 6); ctx.fill();
+  const p   = Math.max(0, gs.timerProg);
+  const col = p > 0.5 ? COL.always : p > 0.25 ? COL.sometimes : COL.never;
+  ctx.fillStyle = col;
+  rr(bx, by, bw * p, bh, 6); ctx.fill();
+  ctx.shadowColor = col; ctx.shadowBlur = 10; ctx.fill();
+  ctx.shadowBlur = 0;
+}
+
+// ══════════════════════════════════════════════════════════════
+//  SPARKLES
+// ══════════════════════════════════════════════════════════════
+function spawnSparks(x, y, color) {
+  for (let i = 0; i < 20; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const s = 3 + Math.random() * 5;
+    gs.sparks.push({
+      x, y,
+      vx: Math.cos(a)*s, vy: Math.sin(a)*s - 3,
+      life: 1, color, r: 2 + Math.random() * 5
+    });
+  }
+}
+
+function drawSparks() {
+  if (!gs) return;
+  gs.sparks.forEach(s => {
+    ctx.globalAlpha = Math.max(0, s.life);
+    ctx.fillStyle   = s.color;
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, Math.max(0.1, s.r * s.life), 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+}
+
+// ══════════════════════════════════════════════════════════════
+//  AUDIO  (Web Audio API — generated tones)
+// ══════════════════════════════════════════════════════════════
+let AC = null;
+function getAC() {
+  if (!AC) AC = new (window.AudioContext || window.webkitAudioContext)();
+  return AC;
+}
+function tone(freq, dur, type='sine', vol=0.28, delay=0) {
+  try {
+    const ac = getAC();
+    const o  = ac.createOscillator(), g = ac.createGain();
+    o.connect(g); g.connect(ac.destination);
+    o.type = type;
+    o.frequency.setValueAtTime(freq, ac.currentTime + delay);
+    g.gain.setValueAtTime(vol, ac.currentTime + delay);
+    g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + delay + dur);
+    o.start(ac.currentTime + delay);
+    o.stop(ac.currentTime + delay + dur + 0.01);
+  } catch(_) {}
+}
+
+const SFX = {
+  correct()  { tone(523,.12); tone(659,.12,undefined,undefined,.1); tone(784,.25,undefined,undefined,.2); },
+  wrong()    { tone(280,.1,'sawtooth',.22); tone(210,.2,'sawtooth',.22,.12); },
+  tick()     { tone(880,.04,'square',.07); },
+  beep()     { tone(440,.2,'sine',.32); tone(550,.25,'sine',.28,.22); },
+  gameover() { [380,310,250,200].forEach((f,i)=>tone(f,.2,'sawtooth',.2,i*.15)); },
+};
+
+let bgmTimer = null;
+let bgmStep  = 0;
+function startBGM() {
+  if (bgmTimer) return;
+  bgmTimer = setInterval(() => {
+    if (!gs || gs.phase==='lifeline' || gs.phase==='idle' || gs.phase==='dying') return;
+    const pat = [1,0,.5,0,1,0,.5,0];
+    const v   = pat[bgmStep % 8];
+    if (v) tone(bgmStep % 4 === 0 ? 75 : 55, .08, 'square', .04 * v);
+    bgmStep++;
+  }, 195);
+}
+function stopBGM() { clearInterval(bgmTimer); bgmTimer = null; bgmStep = 0; }
+
+// ══════════════════════════════════════════════════════════════
+//  CONFETTI
+// ══════════════════════════════════════════════════════════════
+const ccv = document.getElementById('cc');
+const cct = ccv.getContext('2d');
+let cpieces = [], craf = null;
+
+function launchConfetti() {
+  ccv.width  = window.innerWidth;
+  ccv.height = window.innerHeight;
+  cpieces = Array.from({ length: 120 }, () => ({
+    x:  Math.random() * ccv.width,
+    y:  Math.random() * -200,
+    vx: (Math.random() - .5) * 3,
+    vy: 2 + Math.random() * 3,
+    rot: Math.random() * 360,
+    rv:  (Math.random() - .5) * 6,
+    w: 8 + Math.random() * 7,
+    h: 5 + Math.random() * 5,
+    color: ['#f0d060','#27ae60','#e74c3c','#3498db','#e67e22','#9b59b6'][Math.random()*6|0],
+    alpha: 1
+  }));
+  if (craf) cancelAnimationFrame(craf);
+  (function tick() {
+    cct.clearRect(0, 0, ccv.width, ccv.height);
+    cpieces.forEach(p => {
+      p.x += p.vx; p.y += p.vy; p.rot += p.rv;
+      if (p.y > ccv.height) { p.y = -20; p.x = Math.random() * ccv.width; }
+      cct.save();
+      cct.translate(p.x, p.y); cct.rotate(p.rot * Math.PI / 180);
+      cct.globalAlpha = Math.max(0, 1 - p.y / ccv.height * 0.3);
+      cct.fillStyle   = p.color;
+      cct.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+      cct.restore();
+    });
+    craf = requestAnimationFrame(tick);
+  })();
+}
+function stopConfetti() {
+  if (craf) { cancelAnimationFrame(craf); craf = null; }
+  cct.clearRect(0, 0, ccv.width, ccv.height);
+}
+
+// ══════════════════════════════════════════════════════════════
+//  UTILITIES
+// ══════════════════════════════════════════════════════════════
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.random() * (i + 1) | 0;
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// ══════════════════════════════════════════════════════════════
+//  KEYBOARD SHORTCUTS
+// ══════════════════════════════════════════════════════════════
+document.addEventListener('keydown', e => {
+  // Spacebar = lifeline hint (prevent page scroll)
+  if (e.key === ' ') {
+    e.preventDefault();
+    if (gs && gs.btnOn && gs.phase === 'waiting') useLifeline();
+    return;
+  }
+  if (!gs || !gs.btnOn) return;
+  if (e.key === 'a' || e.key === 'A') act('always');
+  if (e.key === 's' || e.key === 'S') act('sometimes');
+  if (e.key === 'n' || e.key === 'N') act('never');
+});
+
+// ══════════════════════════════════════════════════════════════
+//  AUTO-SCALE  (fills the browser window at any size/projector)
+// ══════════════════════════════════════════════════════════════
+function scaleApp() {
+  const scale = Math.min(window.innerWidth / 980, window.innerHeight / 650);
+  document.getElementById('app').style.transform = `scale(${scale})`;
+}
+window.addEventListener('resize', scaleApp);
+
+// ══════════════════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════════════════
+window.addEventListener('load', () => {
+  scaleApp();
+  for (let i = 0; i < 4; i++) addRow();
+  showScreen('s-land');
+});
+</script>
+</body>
+</html>
