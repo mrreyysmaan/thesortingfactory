@@ -1,0 +1,24 @@
+{
+  "name": "thesortingfactory",
+  "version": "1.0.0",
+  "description": "The Sorting Factory — Always, Sometimes, Never",
+  "main": "index.html",
+  "scripts": {
+    "dev": "npx serve .",
+    "test": "echo \"No tests specified\" && exit 0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mrreyysmaan/thesortingfactory.git"
+  },
+  "keywords": ["sorting", "game", "education"],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mrreyysmaan/thesortingfactory/issues"
+  },
+  "homepage": "https://github.com/mrreyysmaan/thesortingfactory#readme",
+  "dependencies": {
+    "@vercel/analytics": "^2.0.1"
+  }
+}

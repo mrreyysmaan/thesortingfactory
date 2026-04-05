@@ -1,0 +1,15 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+.vercel/
+
+# Cache
+.cache/
+.turbo/
+
+# OS
+.DS_Store
+Thumbs.db
